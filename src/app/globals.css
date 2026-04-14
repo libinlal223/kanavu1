@@ -143,3 +143,278 @@ body {
   text-transform: uppercase;
   font-family: var(--font-mono, monospace);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  FINALE SECTION                                                          */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* Sticky inner wrapper — sits at viewport centre */
+.finale-overlay {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Fade-in transition (applied via JS class toggle) ── */
+.finale-fade-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.finale-fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered delays for child elements */
+.finale-fade-in.delay-1 { transition-delay: 0.15s; }
+.finale-fade-in.delay-2 { transition-delay: 0.35s; }
+.finale-fade-in.delay-3 { transition-delay: 0.55s; }
+
+/* ── Finale logo (HTML img overlay) ── */
+.finale-logo {
+  width: clamp(80px, 12vw, 140px);
+  height: auto;
+  filter: drop-shadow(0 0 30px rgba(167, 139, 250, 0.4))
+          drop-shadow(0 0 60px rgba(167, 139, 250, 0.15));
+  margin-bottom: 2rem;
+}
+
+/* ── CTA Button — glassmorphic ── */
+.finale-cta {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2.25rem;
+  font-size: clamp(0.875rem, 1.5vw, 1.05rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f0f0f0;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  border-radius: 100px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease,
+              transform 0.3s ease;
+}
+
+.finale-cta:hover {
+  background: rgba(167, 139, 250, 0.22);
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 0 28px rgba(167, 139, 250, 0.25),
+              0 0 60px rgba(167, 139, 250, 0.08);
+  transform: translateY(-2px);
+}
+
+.finale-cta:active {
+  transform: translateY(0);
+}
+
+/* Arrow icon inside CTA */
+.finale-cta-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.finale-cta:hover .finale-cta-arrow {
+  transform: translateX(4px);
+}
+
+/* ── Bottom Navigation Bar ── */
+.finale-nav {
+  pointer-events: auto;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: rgba(5, 0, 10, 0.55);
+  border-top: 1px solid rgba(167, 139, 250, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.finale-nav.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.finale-nav-item {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1.1rem 1.8rem;
+  position: relative;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+.finale-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--accent-light);
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.finale-nav-item:hover {
+  color: #fff;
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.finale-nav-item:hover::after {
+  width: 60%;
+  left: 20%;
+}
+
+/* Separator dots between nav items */
+.finale-nav-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(167, 139, 250, 0.25);
+  flex-shrink: 0;
+}
+
+/* ── Mobile Hamburger ── */
+.finale-hamburger {
+  pointer-events: auto;
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 12;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  background: rgba(5, 0, 10, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.5s ease, background 0.3s ease;
+}
+
+.finale-hamburger.visible {
+  opacity: 1;
+}
+
+.finale-hamburger:hover {
+  background: rgba(167, 139, 250, 0.15);
+}
+
+.finale-hamburger-icon {
+  width: 20px;
+  height: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.finale-hamburger-icon span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Hamburger → X animation */
+.finale-hamburger.open .finale-hamburger-icon span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.finale-hamburger.open .finale-hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+.finale-hamburger.open .finale-hamburger-icon span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ── Mobile Slide-up Menu ── */
+.finale-mobile-menu {
+  pointer-events: auto;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem 5rem;
+  background: rgba(5, 0, 10, 0.85);
+  border-top: 1px solid rgba(167, 139, 250, 0.15);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.finale-mobile-menu.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.finale-mobile-menu-item {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.9rem 2rem;
+  width: 100%;
+  text-align: center;
+  transition: color 0.3s ease, background 0.3s ease;
+  border-radius: 8px;
+}
+
+.finale-mobile-menu-item:hover {
+  color: #fff;
+  background: rgba(167, 139, 250, 0.1);
+}
+
+/* ── Desktop-only nav (hide on mobile) ── */
+@media (max-width: 767px) {
+  .finale-nav { display: none; }
+}
+
+/* ── Hide hamburger on desktop ── */
+@media (min-width: 768px) {
+  .finale-hamburger { display: none; }
+  .finale-mobile-menu { display: none; }
+}

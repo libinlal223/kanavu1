@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import FinaleOverlay from "@/components/FinaleOverlay";
 
 export default function Home() {
   return (
@@ -41,49 +42,18 @@ export default function Home() {
         className="nebula-section"
         style={{ minHeight: "200vh", position: "relative" }}
       >
-        {/* Entry text — visible at the start of the nebula scroll */}
-        <div
-          className="flex flex-col items-center justify-center pointer-events-none select-none"
-          style={{ height: "100vh", position: "sticky", top: 0 }}
-        >
-          <p className="nebula-subtitle mb-4">Entering</p>
-          <h2 className="nebula-title">Infinite Nebula</h2>
-          <p className="mt-6 text-violet-300/40 text-sm tracking-widest font-mono">
-            Keep scrolling to fly through
-          </p>
-        </div>
       </section>
 
-      {/* ── Section 3 ── */}
-      <section className="min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-2xl text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">
-            Three.js + R3F
-          </h2>
-          <p className="text-neutral-400 text-lg leading-relaxed">
-            A full Three.js scene rendering behind your DOM, driven by
-            @react-three/fiber and @react-three/drei for declarative 3D.
-          </p>
-        </div>
+      {/* ── Section 4: Finale ──
+          150vh gives the camera enough scroll runway to decelerate.
+          Camera slows down, tilts upward into open nebula sky.
+          Logo reappears at elegant scale, CTA + nav bar fade in. */}
+      <section
+        id="finale"
+        style={{ minHeight: "150vh", position: "relative" }}
+      >
+        <FinaleOverlay />
       </section>
-
-      {/* ── Section 4 ── */}
-      <section className="min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-2xl text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">
-            GSAP Animations
-          </h2>
-          <p className="text-neutral-400 text-lg leading-relaxed">
-            GSAP ScrollTrigger is synced with Lenis, giving you a single
-            animation timeline that responds to smooth scrolling.
-          </p>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer className="py-12 text-center text-neutral-600 text-sm border-t border-neutral-800">
-        Built with Next.js · Three.js · GSAP · Lenis
-      </footer>
     </Layout>
   );
 }
