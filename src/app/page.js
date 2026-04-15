@@ -1,9 +1,11 @@
 import Layout from "@/components/Layout";
 import FinaleOverlay from "@/components/FinaleOverlay";
+import Sec2Background from "@/components/Sec2Background";
 
 export default function Home() {
   return (
     <Layout>
+      <Sec2Background />
       {/* ── Section 1: Hero / Fly-through trigger ──
           This section's 100vh height drives the ScrollTrigger animation.
           The 3D logo + starfield are the focus; HTML is kept minimal. */}
@@ -42,6 +44,7 @@ export default function Home() {
         className="nebula-section"
         style={{ minHeight: "200vh", position: "relative" }}
       >
+
       </section>
 
       {/* ── Section 4: Finale ──

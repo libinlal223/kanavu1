@@ -1,293 +1,331 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MeshReflectorMaterial, Text, Html, Line, Clouds, Cloud, useVideoTexture } from "@react-three/drei";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /* ── Tuneable layout ── */
-const FRAME_ASPECT = 9 / 16;
-const FRAME_WIDTH = 2.5;
-const FRAME_HEIGHT = FRAME_WIDTH / FRAME_ASPECT;
-const FRAME_X_OFFSET = 4;         // zigzag left/right distance
-const Y_OFFSET = 0.3;            // slight vertical variation
-const PASS_FADE_DISTANCE = 3;     // how quickly frame fades after passing
-const PASS_SCALE_BOOST = 1.5;     // scale-up factor when passing
-const SCANLINE_SPEED = 2.0;       // scanline scroll speed
-
-/* ── Default frame configs ── */
-const DEFAULT_FRAMES = [
-  { id: 0, src: "/videos/reel-1.mp4",  z: -10, side: "left" },
-  { id: 1, src: "/videos/reel-2.mp4",  z: -16, side: "right" },
-  { id: 2, src: "/videos/reel-3.mp4",  z: -22, side: "left" },
-  { id: 3, src: "/videos/reel-4.mp4",  z: -28, side: "right" },
-  { id: 4, src: "/videos/reel-5.mp4",  z: -34, side: "left" },
-  { id: 5, src: "/videos/reel-6.mp4",  z: -40, side: "right" },
-];
+const NUM_FRAMES = 21; // Extended to allow extra tunnel frames after the 5 zigzag boxes
+const FRAME_WIDTH = 12;
+const FRAME_HEIGHT = 7;
+const FLOOR_Y = -FRAME_HEIGHT / 2; // Floor surface perfectly aligns with the bottom of the box frames
+const START_Z = -5;
+const END_Z = -80;
+const PASS_FADE_DISTANCE = 4;
+const GLOW_COLOR = "#7cacf8"; // Soft blue-white neon
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Scanline overlay shader                                                  */
+/*  Holographic wireframe outline                                            */
 /* ────────────────────────────────────────────────────────────────────────── */
-const scanlineVertexShader = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
+function TunnelFrame({ z }) {
+  const groupRef = useRef();
+  const { camera } = useThree();
 
-const scanlineFragmentShader = /* glsl */ `
-  uniform float uTime;
-  uniform float uOpacity;
-  varying vec2 vUv;
-
-  void main() {
-    // Horizontal scanlines
-    float line = sin((vUv.y * 120.0) + uTime * ${SCANLINE_SPEED.toFixed(1)}) * 0.5 + 0.5;
-    line = smoothstep(0.3, 0.7, line);
-
-    // Subtle glitch flicker
-    float flicker = sin(uTime * 13.7) * sin(uTime * 7.3) * 0.5 + 0.5;
-    float glitch = step(0.97, flicker) * 0.15;
-
-    // Edge vignette glow
-    float vignette = 1.0 - smoothstep(0.3, 0.5, length(vUv - 0.5));
-
-    float alpha = (line * 0.08 + glitch + vignette * 0.04) * uOpacity;
-    gl_FragColor = vec4(0.6, 0.4, 1.0, alpha);
-  }
-`;
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Holographic border glow                                                  */
-/* ────────────────────────────────────────────────────────────────────────── */
-function FrameBorder({ width, height }) {
-  const geometry = useMemo(() => {
-    const hw = width / 2;
-    const hh = height / 2;
-    const pts = [
-      new THREE.Vector3(-hw, -hh, 0.01),
-      new THREE.Vector3(hw, -hh, 0.01),
-      new THREE.Vector3(hw, hh, 0.01),
-      new THREE.Vector3(-hw, hh, 0.01),
-      new THREE.Vector3(-hw, -hh, 0.01),
+  // Only an arch: bottom-left -> top-left -> top-right -> bottom-right
+  const archPoints = useMemo(() => {
+    const hw = FRAME_WIDTH / 2;
+    const hh = FRAME_HEIGHT / 2;
+    return [
+      [-hw, -hh, 0], // Bottom left
+      [-hw, hh, 0],  // Top left
+      [hw, hh, 0],   // Top right
+      [hw, -hh, 0],  // Bottom right
     ];
-    return new THREE.BufferGeometry().setFromPoints(pts);
-  }, [width, height]);
+  }, []);
 
-  return (
-    <lineLoop geometry={geometry}>
-      <lineBasicMaterial color="#a78bfa" transparent opacity={0.6} />
-    </lineLoop>
-  );
-}
+  // Fade out frames as camera passes them
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const distToCamera = camera.position.z - z;
 
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  useVideoTextureManual — load video without Suspense so missing files     */
-/*  don't crash the app                                                      */
-/* ────────────────────────────────────────────────────────────────────────── */
-function useVideoTextureManual(src) {
-  const [texture, setTexture] = useState(null);
+    let opacity = 0;
 
-  useEffect(() => {
-    if (!src) return;
-
-    const video = document.createElement("video");
-    video.src = src;
-    video.crossOrigin = "anonymous";
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.autoplay = false;
-    video.preload = "auto";
-
-    const onCanPlay = () => {
-      video.play().catch(() => {}); // auto-play might be blocked
-      const tex = new THREE.VideoTexture(video);
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.format = THREE.RGBAFormat;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      setTexture(tex);
-    };
-
-    const onError = () => {
-      // Video failed to load — texture stays null, fallback will be used
-      setTexture(null);
-    };
-
-    video.addEventListener("canplay", onCanPlay, { once: true });
-    video.addEventListener("error", onError, { once: true });
-    video.load();
-
-    return () => {
-      video.removeEventListener("canplay", onCanPlay);
-      video.removeEventListener("error", onError);
-      video.pause();
-      video.removeAttribute("src");
-      video.load(); // release resources
-      if (texture) texture.dispose();
-    };
-  }, [src]);
-
-  return texture;
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Fallback canvas texture                                                  */
-/* ────────────────────────────────────────────────────────────────────────── */
-function createFallbackTexture(index) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 180;
-  canvas.height = 320;
-  const ctx = canvas.getContext("2d");
-
-  // Gradient background with slight color variation per frame
-  const hue = 260 + index * 15; // purple range
-  const gradient = ctx.createLinearGradient(0, 0, 180, 320);
-  gradient.addColorStop(0, `hsl(${hue}, 60%, 8%)`);
-  gradient.addColorStop(0.5, `hsl(${hue}, 50%, 15%)`);
-  gradient.addColorStop(1, `hsl(${hue + 20}, 60%, 5%)`);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 180, 320);
-
-  // Grid lines for "hologram" feel
-  ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.1)`;
-  ctx.lineWidth = 0.5;
-  for (let y = 0; y < 320; y += 6) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(180, y);
-    ctx.stroke();
-  }
-
-  // Play triangle (centered at 90, 160)
-  ctx.fillStyle = `hsla(${hue}, 70%, 70%, 0.3)`;
-  ctx.beginPath();
-  ctx.moveTo(75, 135);
-  ctx.lineTo(75, 185);
-  ctx.lineTo(120, 160);
-  ctx.closePath();
-  ctx.fill();
-
-
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  return tex;
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  useImageTextureManual                                                    */
-/* ────────────────────────────────────────────────────────────────────────── */
-function useImageTextureManual(url) {
-  const [texture, setTexture] = useState(null);
-
-  useEffect(() => {
-    if (!url) return;
-    let active = true;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
-    
-    loader.load(
-      url,
-      (loadedTex) => {
-        if (!active) {
-          loadedTex.dispose();
-          return;
-        }
-        loadedTex.colorSpace = THREE.SRGBColorSpace;
-        setTexture(loadedTex);
-      },
-      undefined,
-      () => {
-        if (active) setTexture(null);
-      }
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [url]);
-
-  return texture;
-}
-
-function VideoFrame({ src, index, isMobile }) {
-  const scanlineRef = useRef();
-  
-  // Load a random real image based on the frame index
-  const imageUrl = `https://picsum.photos/360/640?random=${index}`;
-  const imageTexture = useImageTextureManual(imageUrl);
-
-  const fallbackTexture = useMemo(() => createFallbackTexture(index), [index]);
-  const activeTexture = imageTexture || fallbackTexture;
-
-  // Animate scanline time
-  useFrame((state) => {
-    if (scanlineRef.current?.uniforms) {
-      scanlineRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+    if (distToCamera > 0) {
+      opacity = 1;
+      groupRef.current.scale.setScalar(1); // Keep unscaled
+    } else if (distToCamera <= 0 && distToCamera > -PASS_FADE_DISTANCE) {
+      const passProgress = Math.abs(distToCamera) / PASS_FADE_DISTANCE;
+      opacity = 1 - passProgress;
+      // Do not scale the box as it passes, to maintain perfect floor alignment
+      groupRef.current.scale.setScalar(1);
     }
+
+    groupRef.current.traverse((child) => {
+      if (child.material) {
+        child.material.opacity = Math.max(0, opacity);
+      }
+    });
   });
 
   return (
-    <group>
-      {/* Video plane */}
-      <mesh>
-        <planeGeometry args={[FRAME_WIDTH, FRAME_HEIGHT]} />
-        <meshStandardMaterial
-          map={activeTexture}
-          emissive="#a78bfa"
-          emissiveIntensity={1.5}
-          emissiveMap={activeTexture}
-          transparent
-          opacity={1}
-          side={THREE.DoubleSide}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Scanline overlay (desktop only) */}
-      {!isMobile && (
-        <mesh position={[0, 0, 0.02]}>
-          <planeGeometry args={[FRAME_WIDTH, FRAME_HEIGHT]} />
-          <shaderMaterial
-            ref={scanlineRef}
-            transparent
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            uniforms={{
-              uTime: { value: 0 },
-              uOpacity: { value: 0.15 },
-            }}
-            vertexShader={scanlineVertexShader}
-            fragmentShader={scanlineFragmentShader}
-          />
-        </mesh>
-      )}
-
-      {/* Holographic border glow */}
-      <FrameBorder width={FRAME_WIDTH + 0.1} height={FRAME_HEIGHT + 0.1} />
+    <group ref={groupRef} position={[0, 0, z]}>
+      {/* Main arch outline — thick neon */}
+      <Line
+        points={archPoints}
+        color={GLOW_COLOR}
+        lineWidth={3.5}
+        transparent
+        opacity={1}
+      />
+      {/* Inner glow pass for bloom */}
+      <Line
+        points={archPoints}
+        color="#ffffff"
+        lineWidth={1.5}
+        transparent
+        opacity={1}
+      />
     </group>
   );
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  VideoFrames — manages all frames, scroll visibility, mobile culling      */
+/*  Dynamic Video Portal                                                     */
 /* ────────────────────────────────────────────────────────────────────────── */
-export default function VideoFrames({ isMobile, frames = DEFAULT_FRAMES }) {
+function VideoPortal({ z, portalIndex, texture }) {
   const groupRef = useRef();
-  const frameRefs = useRef([]);
-  const scrollProgress = useRef(0);
+  const planeGroupRef = useRef();
   const { camera } = useThree();
 
-  // Track the 2 nearest frame indices for mobile culling
-  const [activeIndices, setActiveIndices] = useState(() => new Set([0, 1]));
+  // Zigzag position: Perfect Left/Right alternation using pure even/odd logic
+  const targetX = portalIndex % 2 === 0 ? -3.5 : 3.5;
 
-  // Sync fade-in with the end of the logo zoom (Section 1)
+  useFrame(() => {
+    if (!groupRef.current || !planeGroupRef.current) return;
+    const distToCamera = camera.position.z - z;
+
+    let isVisible = false;
+    let planeScale = 1;
+
+    if (distToCamera > 11.0) {
+      isVisible = false;
+    } else if (distToCamera > 6.5 && distToCamera <= 11.0) {
+      isVisible = true;
+      groupRef.current.position.x = targetX;
+      const scaleProgress = 1 - ((distToCamera - 6.5) / 4.5);
+      planeScale = scaleProgress * scaleProgress;
+    } else if (distToCamera > 0 && distToCamera <= 6.5) {
+      isVisible = true;
+      groupRef.current.position.x = targetX;
+      planeScale = 1;
+    } else if (distToCamera <= 0 && distToCamera > -PASS_FADE_DISTANCE) {
+      const passProgress = Math.abs(distToCamera) / PASS_FADE_DISTANCE;
+      isVisible = true;
+      planeScale = 1 + passProgress * 5; 
+      groupRef.current.position.x = THREE.MathUtils.lerp(targetX, 0, passProgress);
+    } else {
+      isVisible = false;
+    }
+
+    groupRef.current.visible = isVisible;
+    planeGroupRef.current.scale.setScalar(Math.max(0.001, planeScale));
+
+    // Lock opacity strictly to 1.0. This prevents ANY background leaking while scaling through the camera.
+    planeGroupRef.current.traverse((child) => {
+      if (child.material) {
+        child.material.opacity = 1;
+        child.material.transparent = true;
+      }
+    });
+  });
+
+  const vw = 4.8;
+  const vh = 2.7; // 16:9 aspect
+  const hw = vw / 2;
+  const hh = vh / 2;
+  const radius = 0.15; // Curved edge radius
+
+  // Generate curved shape and curved border outline
+  const { roundedRectShape, curvedBorderPoints } = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-hw + radius, -hh);
+    shape.lineTo(hw - radius, -hh);
+    shape.quadraticCurveTo(hw, -hh, hw, -hh + radius);
+    shape.lineTo(hw, hh - radius);
+    shape.quadraticCurveTo(hw, hh, hw - radius, hh);
+    shape.lineTo(-hw + radius, hh);
+    shape.quadraticCurveTo(-hw, hh, -hw, hh - radius);
+    shape.lineTo(-hw, -hh + radius);
+    shape.quadraticCurveTo(-hw, -hh, -hw + radius, -hh);
+    
+    // Extract points and close the loop for the Line component
+    const pts = shape.getPoints(10).map(p => [p.x, p.y, 0]);
+    pts.push(pts[0]);
+    
+    return { roundedRectShape: shape, curvedBorderPoints: pts };
+  }, [hw, hh]);
+
+  return (
+    <group ref={groupRef} position={[targetX, 0, z + 0.5]}>
+      {/* Target inner group allows clean scaling around local origin */}
+      <group ref={planeGroupRef}>
+        
+        {/* Full Black Backdrop: solid rock behind image */}
+        <mesh name="backdrop" position={[0, 0, -0.01]} renderOrder={996}>
+          <shapeGeometry args={[roundedRectShape]} />
+          <meshBasicMaterial 
+            color="#000000" 
+            transparent={true} 
+            opacity={1} 
+            fog={false} 
+            depthTest={false} 
+          />
+        </mesh>
+
+        {/* Video Plane rendering exactly over the black backdrop */}
+        <mesh name="videoMesh" renderOrder={997}>
+          <shapeGeometry args={[roundedRectShape]} />
+          <meshBasicMaterial 
+            map={texture} 
+            color="#ffffff" 
+            transparent={true}
+            opacity={1}
+            toneMapped={false}
+            fog={false} 
+            depthTest={false}
+          />
+        </mesh>
+
+        {/* Crisp Inner Border */}
+        <Line
+          name="borderLine"
+          points={curvedBorderPoints}
+          color="#a78bfa"
+          lineWidth={1.5}
+          transparent={true}
+          opacity={1}
+          depthTest={false}
+          renderOrder={999}
+        />
+      </group>
+    </group>
+  );
+}
+
+
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Reflective Floor                                                         */
+/* ────────────────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Reflective Floor                                                         */
+/* ────────────────────────────────────────────────────────────────────────── */
+function TunnelFloor({ isMobile }) {
+  const { viewport } = useThree();
+  
+  // Generate a wet/imperfect roughness pattern
+  const roughnessTex = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const size = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#111"; // Very low roughness base for high reflectivity
+    ctx.fillRect(0, 0, size, size);
+
+    // subtle streaks/imperfections
+    for (let i = 0; i < 3000; i++) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+      const w = Math.random() * 10;
+      const h = Math.random() * 3 + 1;
+      ctx.fillRect(Math.random() * size, Math.random() * size, w, h);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(12, 12);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+
+  // Pre-blurred fallback for mobile
+  const mobileTex = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const size = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+
+    const gradient = ctx.createLinearGradient(0, size, 0, 0); // Bottom to top
+    gradient.addColorStop(0, "#1a0b2e");
+    gradient.addColorStop(0.5, "#4c1d95"); // Fake blurred reflection glow
+    gradient.addColorStop(1, "#05000a");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+
+  const floorY = FLOOR_Y;
+
+  // Mobile optimization: save battery, no planar reflections
+  if (isMobile) {
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floorY, -50]}>
+        <planeGeometry args={[100, 200]} />
+        <meshBasicMaterial map={mobileTex} fog={true} />
+      </mesh>
+    );
+  }
+
+  return (
+    <group position={[0, floorY, -50]}>
+      {/* 1. Reflective mirror floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[120, 200]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={1024}
+          mixBlur={1.5}
+          mixStrength={50}
+          roughness={0.15}
+          roughnessMap={roughnessTex}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#1a0b2e"
+          metalness={0.8}
+          mirror={1}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Nested Tunnel (Replaces VideoFrames)                                     */
+/* ────────────────────────────────────────────────────────────────────────── */
+export default function VideoFrames({ isMobile }) {
+  const groupRef = useRef();
+  const scrollProgress = useRef(0);
+
+  // Shared image texture to replace video placeholders
+  const sharedImageTexture = useMemo(() => {
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load("/img2.jpg");
+    tex.colorSpace = THREE.SRGBColorSpace;
+    
+    // Fix ShapeGeometry's default world-space UV mapping.
+    // This perfectly projects the image so it spans 100% width and height of our 4.8 x 2.7 shape.
+    const vw = 4.8;
+    const vh = 2.7;
+    tex.repeat.set(1 / vw, 1 / vh);
+    tex.offset.set(0.5, 0.5);
+    
+    return tex;
+  }, []);
+
+  // Sync scroll fade-in (same as before, starts visible when nebulas would have appeared)
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
       const heroEl = document.getElementById("hero");
@@ -311,112 +349,94 @@ export default function VideoFrames({ isMobile, frames = DEFAULT_FRAMES }) {
     };
   }, []);
 
-  // Per-frame scroll animation: fade in/out + scale based on camera distance
   useFrame(() => {
-    const camZ = camera.position.z;
-
-    // Mobile: find the 2 nearest frames and only render those
-    if (isMobile) {
-      const distances = frames.map((f, i) => ({
-        index: i,
-        dist: Math.abs(camZ - f.z),
-      }));
-      distances.sort((a, b) => a.dist - b.dist);
-      const nearest = new Set(distances.slice(0, 2).map((d) => d.index));
-
-      setActiveIndices((prev) => {
-        if (nearest.size !== prev.size) return nearest;
-        for (const v of nearest) {
-          if (!prev.has(v)) return nearest;
-        }
-        return prev;
-      });
-    }
-
-    // Global fade — completely hidden during Section 1.
-    // Becomes visible at the same moment the nebula clouds appear.
+    if (!groupRef.current) return;
     const p = scrollProgress.current;
+    
+    // Hide totally during initial section 1 zoom
     const globalFade = p < 0.7 ? 0 : (p - 0.7) / 0.3;
-
-    // Animate each frame ref
-    frameRefs.current.forEach((group, i) => {
-      if (!group) return;
-
-      // Hard-hide entire group when globalFade is 0
-      // This prevents borders, scanlines, and meshes from leaking through
-      if (globalFade <= 0) {
-        group.visible = false;
-        return;
-      }
-      group.visible = true;
-
-      const frameZ = frames[i].z;
-      const distToCamera = camZ - frameZ;
-
-      let opacity = 0;
-      let scale = 1;
-
-      if (distToCamera > 0) {
-        // Camera is approaching — fully visible (fog handles distant fading)
-        opacity = 1;
-      } else if (distToCamera <= 0 && distToCamera > -PASS_FADE_DISTANCE) {
-        // Camera just passed — scale up and fade out quickly
-        const passProgress = Math.abs(distToCamera) / PASS_FADE_DISTANCE;
-        opacity = 1 - passProgress;
-        scale = 1 + passProgress * (PASS_SCALE_BOOST - 1);
-      }
-
-      // Multiply by globalFade so frames fade in sync with nebula
-      opacity = THREE.MathUtils.clamp(opacity, 0, 1) * globalFade;
-      group.scale.setScalar(scale);
-
-      // Apply opacity to ALL materials (meshes AND line borders)
-      group.traverse((child) => {
-        if (child.material && child.material.opacity !== undefined) {
-          child.material.opacity = opacity;
-        }
-      });
-    });
+    
+    if (globalFade <= 0) {
+      groupRef.current.visible = false;
+      return;
+    }
+    
+    groupRef.current.visible = true;
+    
+    // The "opacity" of the entire tunnel fading in (globalFade) is tricky mapped 
+    // to all children but here we simply rely on the dark fog. To snap it off perfectly:
+    // We could apply globalFade to opacity, but since it's deep in fog, visibility check usually suffices.
   });
 
-  // Compute positions (zigzag left/right)
-  const framePositions = useMemo(() => {
-    return frames.map((f, i) => {
-      const x = f.side === "left" ? -FRAME_X_OFFSET : FRAME_X_OFFSET;
-      const y = (i % 3 - 1) * Y_OFFSET;
-      return [x, y, f.z];
-    });
-  }, [frames]);
-
-  // Frames angle slightly inward toward center
-  const frameRotations = useMemo(() => {
-    return frames.map((f) => {
-      const yRot = f.side === "left" ? 0.2 : -0.2;
-      return [0, yRot, 0];
-    });
-  }, [frames]);
+  // Calculate positions for frames
+  const frameZs = useMemo(() => {
+    const zs = [];
+    const step = (END_Z - START_Z) / (NUM_FRAMES - 1);
+    for (let i = 0; i < NUM_FRAMES; i++) {
+      zs.push(START_Z + step * i);
+    }
+    return zs;
+  }, []);
 
   return (
     <group ref={groupRef}>
-      {frames.map((frame, i) => {
-        // Mobile culling: only render nearby frames
-        if (isMobile && !activeIndices.has(i)) return null;
+      {/* 1. Reflective Polished Floor */}
+      <TunnelFloor isMobile={isMobile} />
 
-        return (
-          <group
-            key={frame.id}
-            ref={(el) => (frameRefs.current[i] = el)}
-            position={framePositions[i]}
-            rotation={frameRotations[i]}
-          >
-            <VideoFrame
-              src={frame.src}
-              index={i}
-              isMobile={isMobile}
-            />
-          </group>
-        );
+      {/* 2. Concentric Neon Wireframes (Excluding the last one) */}
+      {frameZs.slice(0, -1).map((z, i) => (
+        <TunnelFrame key={i} z={z} />
+      ))}
+
+      {/* 2.5 Dynamic Video Portals placed at every 3rd frame (max 5) */}
+      {frameZs.map((z, i) => {
+        if (i !== 0 && i !== frameZs.length - 1 && i % 3 === 0 && i <= 15) {
+          const portalIdx = i / 3; // 1, 2, 3...
+          return <VideoPortal key={`vp_${i}`} z={z} portalIndex={portalIdx} texture={sharedImageTexture} />;
+        }
+        return null;
       })}
+
+
+
+      {/* 4. Deep Volumetric Smog System */}
+      <Clouds limit={60}>
+        <Cloud
+          seed={1}
+          position={[0, 0, END_Z - 2]}
+          color="#ffffff"
+          opacity={0.05} // Kept low because bloom is very high
+          speed={0.2}
+          volume={15}
+          segments={20}
+          bounds={[20, 8, 4]}
+          fade={20}
+        />
+        {/* Dynamic thick smog enveloping each image portal (max 5) */}
+        {frameZs.map((z, i) => {
+          if (i !== 0 && i !== frameZs.length - 1 && i % 3 === 0 && i <= 15) {
+            const portalIdx = i / 3;
+            // Perfect alternation for the smog wrapping
+            const targetX = portalIdx % 2 === 0 ? -3.5 : 3.5;
+
+            return (
+              <Cloud
+                key={`smog_${i}`}
+                seed={i + 10}
+                position={[targetX, 0, z - 1.5]}
+                color="#0f0724" // Extremely dark deep purple smog to create the "dark shade" immersion
+                opacity={0.35} // Reduced volume opacity so the image burns through clearly
+                speed={0.4}
+                volume={6}
+                segments={15}
+                bounds={[8, 6, 4]}
+                fade={15}
+              />
+            );
+          }
+          return null;
+        })}
+      </Clouds>
     </group>
   );
 }

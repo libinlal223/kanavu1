@@ -7,11 +7,7 @@ import useIsMobile from "@/hooks/useMobile";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const NAV_LINKS = [
-  { label: "Film & TV", href: "#" },
-  { label: "Advertising", href: "#" },
-  { label: "Virtual Production", href: "#" },
-];
+
 
 /**
  * FinaleOverlay — HTML overlay for the ending section.
@@ -26,7 +22,7 @@ const NAV_LINKS = [
 export default function FinaleOverlay() {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const isVisibleRef = useRef(false);
   const triggerRef = useRef(null);
 
   useEffect(() => {
@@ -36,12 +32,14 @@ export default function FinaleOverlay() {
 
       const trigger = ScrollTrigger.create({
         trigger: finaleEl,
-        start: "top 60%",
+        start: "top top",
         end: "bottom bottom",
-        onEnter: () => setIsVisible(true),
-        onLeaveBack: () => {
-          setIsVisible(false);
-          setMenuOpen(false);
+        onUpdate: (self) => {
+          const shouldBeVisible = self.progress >= 0.7;
+          if (shouldBeVisible !== isVisibleRef.current) {
+            isVisibleRef.current = shouldBeVisible;
+            setIsVisible(shouldBeVisible);
+          }
         },
       });
 
@@ -62,56 +60,27 @@ export default function FinaleOverlay() {
         <img
           src="/logo.svg"
           alt="Kanavu"
-          className={`finale-logo finale-fade-in delay-1 ${isVisible ? "visible" : ""}`}
+          className={`finale-logo finale-fade-in-down delay-1 ${isVisible ? "visible" : ""}`}
         />
+
+        {/* Text Area */}
+        <div className={`finale-text finale-fade-in delay-2 ${isVisible ? "visible" : ""}`} style={{ textAlign: "center", marginBottom: "3rem" }}>
+          <h2 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "clamp(2.5rem, 5vw, 4.5rem)", fontWeight: "600", color: "#ffffff", paddingBottom: "1.0rem" }}>
+            Bringing stories to life
+          </h2>
+          <p style={{ fontFamily: "var(--font-outfit), sans-serif", fontSize: "clamp(1rem, 2vw, 1.25rem)", color: "rgba(255,255,255,0.75)", fontWeight: "300", letterSpacing: "0.04em" }}>
+            Kerala's First ai-powered advertising agency.
+          </p>
+        </div>
 
         {/* CTA */}
         <a
           href="#"
-          className={`finale-cta finale-fade-in delay-2 ${isVisible ? "visible" : ""}`}
+          className={`finale-cta finale-fade-in delay-3 ${isVisible ? "visible" : ""}`}
         >
           Start a Project
           <span className="finale-cta-arrow" aria-hidden="true">→</span>
         </a>
-      </div>
-
-      {/* ── Desktop Bottom Nav ── */}
-      <nav className={`finale-nav ${isVisible ? "visible" : ""}`}>
-        {NAV_LINKS.map((link, i) => (
-          <span key={link.label} style={{ display: "contents" }}>
-            {i > 0 && <span className="finale-nav-sep" />}
-            <a href={link.href} className="finale-nav-item">
-              {link.label}
-            </a>
-          </span>
-        ))}
-      </nav>
-
-      {/* ── Mobile Hamburger ── */}
-      <button
-        className={`finale-hamburger ${isVisible ? "visible" : ""} ${menuOpen ? "open" : ""}`}
-        onClick={() => setMenuOpen((v) => !v)}
-        aria-label="Menu"
-      >
-        <div className="finale-hamburger-icon">
-          <span />
-          <span />
-          <span />
-        </div>
-      </button>
-
-      {/* ── Mobile Slide-up Menu ── */}
-      <div className={`finale-mobile-menu ${menuOpen ? "open" : ""}`}>
-        {NAV_LINKS.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            className="finale-mobile-menu-item"
-            onClick={() => setMenuOpen(false)}
-          >
-            {link.label}
-          </a>
-        ))}
       </div>
     </>
   );

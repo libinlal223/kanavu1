@@ -9,8 +9,6 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useIsMobile from "@/hooks/useMobile";
-import NebulaClouds from "./NebulaClouds";
-import NebulaMobileFallback from "./NebulaMobileFallback";
 import VideoFrames from "./VideoFrames";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -18,8 +16,8 @@ gsap.registerPlugin(ScrollTrigger);
 /* ── Tuneable constants ── */
 const CAMERA_START_Z = 20;        // Section 1 start
 const CAMERA_LOGO_END_Z = -2;    // Section 1 end = Section 2 start
-const CAMERA_NEBULA_END_Z = -52;  // Section 2 end (fly through nebula)
-const CAMERA_FINALE_Z = -57;      // Section 4 end (camera decelerates to here)
+const CAMERA_NEBULA_END_Z = -87;  // Section 2 end (fly through nebula)
+const CAMERA_FINALE_Z = -97;      // Section 4 end (camera decelerates to here)
 const CAMERA_FINALE_TILT = 0.15;  // Upward tilt in radians at finale
 const LOGO_MAX_SCALE = 100;
 const FADE_START = 0.6;           // progress value at which logo opacity fade begins
@@ -183,143 +181,21 @@ function LogoMesh() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  EndingLogo — smaller logo that reappears fixed in the finale            */
-/* ────────────────────────────────────────────────────────────────────────── */
-function EndingLogo() {
-  const svgData = useLoader(SVGLoader, "/logo.svg");
-  const wrapperRef = useRef();
-  const innerRef = useRef();
-  const baseScale = useRef(1);
-  const finaleProgress = useRef(0);
-  const [ready, setReady] = useState(false);
-  const { camera } = useThree();
-
-  const meshData = useMemo(() => {
-    const items = [];
-    svgData.paths.forEach((path) => {
-      const style = path.userData?.style;
-      const color = resolveColor(style?.fill);
-      const opacity = parseFloat(style?.fillOpacity ?? 1);
-      const shapes = SVGLoader.createShapes(path);
-      shapes.forEach((shape) => {
-        const geometry = new THREE.ExtrudeGeometry(shape, {
-          depth: 1,
-          bevelEnabled: true,
-          bevelThickness: 0.2,
-          bevelSize: 0.1,
-          bevelSegments: 2,
-        });
-        items.push({ geometry, color, opacity });
-      });
-    });
-    return items;
-  }, [svgData]);
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    const inner = innerRef.current;
-    if (!wrapper || !inner || meshData.length === 0) return;
-
-    wrapper.scale.set(1, 1, 1);
-    wrapper.position.set(0, 0, 0);
-    inner.position.set(0, 0, 0);
-
-    const box = new THREE.Box3().setFromObject(wrapper);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-
-    inner.position.set(-center.x, -center.y, -center.z);
-
-    const maxDim = Math.max(size.x, size.y, size.z) || 1;
-    const s = (LOGO_FIT_SIZE * 0.35) / maxDim; // 35% of original
-    wrapper.scale.set(s, -s, s);
-    baseScale.current = s;
-
-    setReady(true);
-  }, [meshData]);
-
-  // Track finale scroll progress
-  useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      const finaleEl = document.getElementById("finale");
-      if (!finaleEl) return;
-
-      const trigger = ScrollTrigger.create({
-        trigger: finaleEl,
-        start: "top 60%",
-        end: "bottom bottom",
-        onUpdate: (self) => {
-          finaleProgress.current = self.progress;
-        },
-      });
-
-      wrapperRef.current?.__st?.kill?.();
-      if (wrapperRef.current) wrapperRef.current.__st = trigger;
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      wrapperRef.current?.__st?.kill?.();
-    };
-  }, []);
-
-  useFrame((_, delta) => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper || !ready) return;
-
-    // Position in front of camera at finale
-    const targetZ = CAMERA_FINALE_Z - 8;
-    wrapper.position.set(0, 0.5, targetZ);
-
-    // Gentle rotation
-    wrapper.rotation.y += delta * 0.15;
-
-    // Fade in based on finale progress
-    const p = finaleProgress.current;
-    const opacity = THREE.MathUtils.clamp(p * 2, 0, 1); // fade in over first 50% of finale
-
-    wrapper.traverse((child) => {
-      if (child.isMesh && child.material) {
-        child.material.opacity = opacity;
-        child.material.emissiveIntensity = 0.3 + p * 0.3;
-      }
-    });
-  });
-
-  return (
-    <group ref={wrapperRef}>
-      <group ref={innerRef}>
-        {meshData.map(({ geometry, color, opacity }, i) => (
-          <mesh key={i} geometry={geometry}>
-            <meshStandardMaterial
-              color={color}
-              emissive={color}
-              emissiveIntensity={0.3}
-              transparent
-              opacity={0}
-              side={THREE.DoubleSide}
-              metalness={0.6}
-              roughness={0.2}
-            />
-          </mesh>
-        ))}
-      </group>
-    </group>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
 /*  CameraRig — chains Section 1 + Section 2 + Finale camera movement      */
 /* ────────────────────────────────────────────────────────────────────────── */
 function CameraRig() {
-  const { camera } = useThree();
+  const { camera, scene, gl } = useThree();
   const heroProgress = useRef(0);
   const nebulaProgress = useRef(0);
   const finaleProgress = useRef(0);
 
   // Smoothed values for damping
   const smoothZ = useRef(CAMERA_START_Z);
+  const smoothY = useRef(0);
   const smoothRotX = useRef(0);
+
+  const colorNavy = useMemo(() => new THREE.Color("#1a0b2e"), []);
+  const colorBlack = useMemo(() => new THREE.Color("#000000"), []);
 
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
@@ -385,7 +261,9 @@ function CameraRig() {
     const fp = finaleProgress.current;
 
     let targetZ = CAMERA_START_Z;
+    let targetY = 0;
     let targetRotX = 0;
+    let targetColor = colorNavy;
 
     if (hp < 1) {
       // Section 1: fly through logo
@@ -398,16 +276,30 @@ function CameraRig() {
       // Use easeOutCubic for natural deceleration
       const easedP = 1 - Math.pow(1 - fp, 3);
       targetZ = THREE.MathUtils.lerp(CAMERA_NEBULA_END_Z, CAMERA_FINALE_Z, easedP);
-      targetRotX = easedP * CAMERA_FINALE_TILT;
+      // Move completely above the tunnel
+      targetY = easedP * 25; 
+      // Tilt to look up at the black sky
+      targetRotX = easedP * (Math.PI / 4.5); 
+      
+      // Interpolate background transitioning to completely pitch black
+      targetColor = colorNavy.clone().lerp(colorBlack, easedP);
     }
 
     // Smooth damping for cinematic feel
     const dampFactor = 1 - Math.exp(-6 * delta);
     smoothZ.current = THREE.MathUtils.lerp(smoothZ.current, targetZ, dampFactor);
+    smoothY.current = THREE.MathUtils.lerp(smoothY.current, targetY, dampFactor);
     smoothRotX.current = THREE.MathUtils.lerp(smoothRotX.current, targetRotX, dampFactor);
 
     camera.position.z = smoothZ.current;
+    camera.position.y = smoothY.current;
     camera.rotation.x = smoothRotX.current;
+
+    // Apply color transition to WebGL and Fog
+    if (scene.fog) {
+      scene.fog.color.copy(targetColor);
+    }
+    gl.setClearColor(targetColor, 1);
   });
 
   return null;
@@ -454,8 +346,8 @@ function PostProcessing() {
   return (
     <EffectComposer>
       <Bloom
-        intensity={0.6}
-        luminanceThreshold={0.4}
+        intensity={2.5}
+        luminanceThreshold={0.1}
         luminanceSmoothing={0.9}
         mipmapBlur
       />
@@ -481,7 +373,7 @@ function SceneContent() {
       <pointLight position={[0, 5, -60]} intensity={0.6} color="#a78bfa" distance={40} />
 
       {/* Fog for depth — extended far plane so finale isn't clipped */}
-      <fog attach="fog" args={["#05000a", 30, 100]} />
+      <fog attach="fog" args={["#1a0b2e", 10, 80]} />
 
       {/* Camera rig — handles Section 1 + Section 2 + Finale */}
       <CameraRig />
@@ -494,22 +386,14 @@ function SceneContent() {
         <LogoMesh />
       </Suspense>
 
-      {/* Nebula clouds (desktop) or nothing (mobile gets CSS fallback) */}
-      {!isMobile && (
-        <Suspense fallback={null}>
-          <NebulaClouds />
-        </Suspense>
-      )}
+
 
       {/* Video frames floating in the nebula tunnel */}
       <Suspense fallback={null}>
         <VideoFrames isMobile={isMobile} />
       </Suspense>
 
-      {/* Ending logo — reappears at the finale */}
-      <Suspense fallback={null}>
-        <EndingLogo />
-      </Suspense>
+
 
       {/* Bloom post-processing (desktop only) — stays active through finale */}
       {!isMobile && <PostProcessing />}
@@ -529,15 +413,17 @@ export default function Scene() {
           near: 0.01,
           far: 2000,
         }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: false }}
         dpr={[1, 2]}
-        style={{ background: "transparent" }}
+        style={{ background: "#1a0b2e" }}
+        onCreated={({ gl }) => {
+          gl.setClearColor("#1a0b2e", 1);
+        }}
       >
         <SceneContent />
       </Canvas>
 
-      {/* 2D mobile nebula fallback (outside Canvas) */}
-      {isMobile && <NebulaMobileFallback />}
+
     </>
   );
 }
