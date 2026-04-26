@@ -46,7 +46,19 @@ function TunnelFrame({ z }) {
     let opacity = 0;
 
     if (distToCamera > 0) {
-      opacity = 1;
+      // Fade out far away frames for a realistic depth effect
+      const FADE_START = 15;
+      const FADE_END = 55;
+      
+      if (distToCamera < FADE_START) {
+        opacity = 1;
+      } else if (distToCamera < FADE_END) {
+        opacity = 1 - ((distToCamera - FADE_START) / (FADE_END - FADE_START));
+      } else {
+        // Minimal visibility for frames that are very far away
+        opacity = 0.05;
+      }
+      
       groupRef.current.scale.setScalar(1); // Keep unscaled
     } else if (distToCamera <= 0 && distToCamera > -PASS_FADE_DISTANCE) {
       const passProgress = Math.abs(distToCamera) / PASS_FADE_DISTANCE;
@@ -412,6 +424,41 @@ export default function VideoFrames({ isMobile }) {
           bounds={[20, 8, 4]}
           fade={20}
         />
+        {/* Ambient moving fog along the tunnel walls */}
+        {frameZs.map((z, i) => {
+          if (i % 2 === 0 && i < frameZs.length - 1) {
+            return (
+              <group key={`ambient_fog_${i}`}>
+                {/* Left wall fog */}
+                <Cloud
+                  seed={i * 10}
+                  position={[-7, 0, z]}
+                  color="#1e0a3d" // Extremely dark rich violet
+                  opacity={0.15}
+                  speed={0.6} // Actively moving
+                  volume={10}
+                  segments={10}
+                  bounds={[4, 10, 10]}
+                  fade={20}
+                />
+                {/* Right wall fog */}
+                <Cloud
+                  seed={i * 10 + 1}
+                  position={[7, 0, z]}
+                  color="#1e0a3d"
+                  opacity={0.15}
+                  speed={0.6}
+                  volume={10}
+                  segments={10}
+                  bounds={[4, 10, 10]}
+                  fade={20}
+                />
+              </group>
+            );
+          }
+          return null;
+        })}
+
         {/* Dynamic thick smog enveloping each image portal (max 5) */}
         {frameZs.map((z, i) => {
           if (i !== 0 && i !== frameZs.length - 1 && i % 3 === 0 && i <= 15) {
@@ -422,7 +469,7 @@ export default function VideoFrames({ isMobile }) {
             return (
               <Cloud
                 key={`smog_${i}`}
-                seed={i + 10}
+                seed={i + 100}
                 position={[targetX, 0, z - 1.5]}
                 color="#0f0724" // Extremely dark deep purple smog to create the "dark shade" immersion
                 opacity={0.35} // Reduced volume opacity so the image burns through clearly

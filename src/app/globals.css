@@ -7,14 +7,12 @@
   --foreground: #f0f0f0;
   --accent: #6d28d9;
   --accent-light: #a78bfa;
-  --nebula-gradient: linear-gradient(
-    180deg,
-    #05000a 0%,
-    #0d0520 25%,
-    #1a0b2e 50%,
-    #0d0520 75%,
-    #05000a 100%
-  );
+  --nebula-gradient: linear-gradient(180deg,
+      #05000a 0%,
+      #0d0520 25%,
+      #1a0b2e 50%,
+      #0d0520 75%,
+      #05000a 100%);
 }
 
 @theme inline {
@@ -22,6 +20,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-montserrat: var(--font-montserrat);
+  --font-unbounded: var(--font-unbounded);
+  --font-league-spartan: var(--font-league-spartan);
 }
 
 /* ── Base Reset ── */
@@ -115,8 +116,20 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
-/*  FINALE SECTION                                                          */
+/*  FINALE SECTION — WebGL Shader + Hero Card                               */
 /* ══════════════════════════════════════════════════════════════════════════ */
+
+/* Full-screen WebGL shader background layer */
+.finale-shader-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
 /* Sticky inner wrapper — sits at viewport centre */
 .finale-overlay {
@@ -129,27 +142,42 @@ body {
   justify-content: center;
   pointer-events: none;
   z-index: 2;
+  padding: 1rem;
+}
+
+/* Hero wrapper — scales in */
+.finale-hero-wrapper {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 1.2s ease-in-out, transform 1.2s ease-out;
+  width: 100%;
+  max-width: 52rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.finale-hero-wrapper.visible {
+  opacity: 1;
+  transform: none;
 }
 
 /* ── Fade-in transition (applied via JS class toggle) ── */
 .finale-fade-in {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 1.2s ease-in-out;
 }
 
 .finale-fade-in.visible {
   opacity: 1;
-  transform: translateY(0);
 }
 
 /* Come from top specifically for logo */
 .finale-fade-in-down {
   opacity: 0;
-  transform: translateY(-40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(-12px);
+  transition: opacity 1.2s ease-in-out, transform 1.2s ease-out;
 }
 
 .finale-fade-in-down.visible {
@@ -158,67 +186,176 @@ body {
 }
 
 /* Staggered delays for child elements */
-.finale-fade-in.delay-1, .finale-fade-in-down.delay-1 { transition-delay: 0.15s; }
-.finale-fade-in.delay-2, .finale-fade-in-down.delay-2 { transition-delay: 0.35s; }
-.finale-fade-in.delay-3, .finale-fade-in-down.delay-3 { transition-delay: 0.55s; }
-
-/* ── Finale logo (HTML img overlay) ── */
-.finale-logo {
-  width: clamp(100px, 16vw, 180px);
-  height: auto;
-  filter: drop-shadow(0 0 30px rgba(167, 139, 250, 0.4))
-          drop-shadow(0 0 60px rgba(167, 139, 250, 0.15));
-  margin-bottom: 2rem;
+.finale-fade-in.delay-1,
+.finale-fade-in-down.delay-1 {
+  transition-delay: 0.15s;
 }
 
-/* ── CTA Button — glassmorphic ── */
-.finale-cta {
+.finale-fade-in.delay-2,
+.finale-fade-in-down.delay-2 {
+  transition-delay: 0.35s;
+}
+
+.finale-fade-in.delay-3,
+.finale-fade-in-down.delay-3 {
+  transition-delay: 0.55s;
+}
+
+/* ── Finale Logo ── */
+.finale-logo {
+  width: clamp(200px, 30vw, 400px);
+  height: auto;
+  filter: drop-shadow(0 0 40px rgba(167, 139, 250, 0.5))
+          drop-shadow(0 0 80px rgba(167, 139, 250, 0.2));
+  margin-bottom: 0.75rem;
+}
+
+/* ── Finale heading ── */
+.finale-heading {
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(2rem, 8vw, 5rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Finale tagline ── */
+.finale-tagline {
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(0.875rem, 2vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  margin-bottom: 0;
+}
+
+/* ── Status indicator ── */
+.finale-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 2rem 0;
+}
+
+.finale-status-dot-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.finale-status-dot-ping {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #22c55e;
+  opacity: 0.75;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.finale-status-dot {
+  position: relative;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: #22c55e;
+}
+
+.finale-status-text {
+  font-size: 0.75rem;
+  color: #22c55e;
+  letter-spacing: 0.02em;
+}
+
+@keyframes ping {
+
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ── Navbar — Glassmorphic liquid pill ── */
+.finale-navbar-glass {
   pointer-events: auto;
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 2.25rem;
-  font-size: clamp(0.875rem, 1.5vw, 1.05rem);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: #f0f0f0;
-  background: rgba(167, 139, 250, 0.12);
-  border: 1px solid rgba(167, 139, 250, 0.28);
+  justify-content: center;
+  padding: 0.6rem 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 100px;
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nav-fixed-top {
+  position: fixed !important;
+  top: 1.5rem !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  width: max-content !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.nav-fixed-top:hover {
+  transform: scale(1.02) !important;
+}
+
+.finale-navbar-glass:hover {
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 0 6px rgba(0, 0, 0, 0.03),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 0 6px 6px rgba(255, 255, 255, 0.06),
+    0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+.finale-navbar-glass-bg {
+  position: absolute;
+  inset: 0;
   border-radius: 100px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 1px 1px 1px -0.5px rgba(255, 255, 255, 0.15),
+    inset -1px -1px 1px -0.5px rgba(255, 255, 255, 0.15),
+    inset 0 0 6px 3px rgba(255, 255, 255, 0.04);
+}
+
+.finale-navbar-links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.finale-navbar-link {
+  color: #ffffff;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-decoration: none;
-  transition: background 0.3s ease,
-              border-color 0.3s ease,
-              box-shadow 0.3s ease,
-              transform 0.3s ease;
+  padding: 0.6rem 1.5rem;
+  border-radius: 100px;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.finale-cta:hover {
-  background: rgba(167, 139, 250, 0.22);
-  border-color: rgba(167, 139, 250, 0.5);
-  box-shadow: 0 0 28px rgba(167, 139, 250, 0.25),
-              0 0 60px rgba(167, 139, 250, 0.08);
-  transform: translateY(-2px);
+.finale-navbar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
-
-.finale-cta:active {
-  transform: translateY(0);
-}
-
-/* Arrow icon inside CTA */
-.finale-cta-arrow {
-  display: inline-block;
-  transition: transform 0.3s ease;
-}
-
-.finale-cta:hover .finale-cta-arrow {
-  transform: translateX(4px);
-}
-
-/* ── Bottom Navigation Bar ── */
-
 
 /* ── Section 2 Tunnel CTA ── */
 .tunnel-cta {

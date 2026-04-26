@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import FinaleOverlay from "@/components/FinaleOverlay";
 import Sec2Background from "@/components/Sec2Background";
+import AboutUs from "@/components/AboutUs";
 
 export default function Home() {
   return (
@@ -57,6 +58,16 @@ export default function Home() {
       >
         <FinaleOverlay />
       </section>
+
+      {/* ── Section 5: About Us ── */}
+      <AboutUs />
+
+      {/* ── Section 6: Blank spacer — background continues, no ribbon ── */}
+      <section
+        id="spacer"
+        className="relative z-10"
+        style={{ minHeight: "100vh", background: "var(--background)" }}
+      />
     </Layout>
   );
 }

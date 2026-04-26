@@ -272,14 +272,10 @@ function CameraRig() {
       // Section 2: fly through nebula
       targetZ = THREE.MathUtils.lerp(CAMERA_LOGO_END_Z, CAMERA_NEBULA_END_Z, np);
     } else {
-      // Section 4 (Finale): decelerate into open space + tilt up
+      // Section 4 (Finale): decelerate into open space, purely fading into darkness
       // Use easeOutCubic for natural deceleration
       const easedP = 1 - Math.pow(1 - fp, 3);
       targetZ = THREE.MathUtils.lerp(CAMERA_NEBULA_END_Z, CAMERA_FINALE_Z, easedP);
-      // Move completely above the tunnel
-      targetY = easedP * 25; 
-      // Tilt to look up at the black sky
-      targetRotX = easedP * (Math.PI / 4.5); 
       
       // Interpolate background transitioning to completely pitch black
       targetColor = colorNavy.clone().lerp(colorBlack, easedP);
