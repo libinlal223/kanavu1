@@ -114,7 +114,7 @@ export default function FinaleOverlay() {
           <div id="finale-text-content" className="flex flex-col items-center justify-center w-full">
             {/* Logo */}
             <img
-              src="/logo1.png"
+              src="/logo1.PNG"
               alt="Kanavu"
               className={`finale-logo finale-fade-in-down delay-1 ${isVisible ? "visible" : ""}`}
             />
@@ -133,38 +133,28 @@ export default function FinaleOverlay() {
               Kerala&apos;s First AI-powered advertising agency.
             </p>
 
-            {/* Status indicator */}
-            <div
-              className={`finale-status finale-fade-in delay-3 ${isVisible ? "visible" : ""}`}
-            >
-              <span className="finale-status-dot-wrapper">
-                <span className="finale-status-dot-ping" />
-                <span className="finale-status-dot" />
-              </span>
-              <p className="finale-status-text">Available for New Projects</p>
-            </div>
           </div>
+        </div>
 
-          {/* Navbar with liquid glass effect and scroll tracking */}
-          <div
-            id="nav-tracker"
-            className={`w-full flex justify-center finale-fade-in delay-3 ${isVisible ? "visible" : ""}`}
-            style={{ minHeight: "50px" }}
+        {/* Navbar with liquid glass effect and scroll tracking */}
+        <div
+          id="nav-tracker"
+          className={`w-full flex justify-center finale-fade-in delay-3 ${isVisible ? "visible" : ""}`}
+          style={{ minHeight: "50px", marginTop: "2rem" }}
+        >
+          <nav
+            id="main-nav"
+            className="finale-navbar-glass"
           >
-            <nav
-              id="main-nav"
-              className="finale-navbar-glass"
-            >
-              <span className="finale-navbar-glass-bg" />
-              <div className="finale-navbar-links">
-                <a href="#services" className="finale-navbar-link">Services</a>
-                <a href="#work" className="finale-navbar-link">Work</a>
-                <a href="#about-us" className="finale-navbar-link">About</a>
-                <a href="#team" className="finale-navbar-link">Team</a>
-                <a href="#contact" className="finale-navbar-link">Contact</a>
-              </div>
-            </nav>
-          </div>
+            <span className="finale-navbar-glass-bg" />
+            <div className="finale-navbar-links">
+              <a href="#services" className="finale-navbar-link">Services</a>
+              <a href="#work" className="finale-navbar-link">Work</a>
+              <a href="#about-us" className="finale-navbar-link">About</a>
+              <a href="#team" className="finale-navbar-link">Team</a>
+              <a href="#contact" className="finale-navbar-link">Contact</a>
+            </div>
+          </nav>
         </div>
       </div>
     </>

@@ -141,7 +141,7 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  z-index: 2;
+  z-index: 9999;
   padding: 1rem;
 }
 
@@ -203,7 +203,7 @@ body {
 
 /* ── Finale Logo ── */
 .finale-logo {
-  width: clamp(200px, 30vw, 400px);
+  width: clamp(120px, 20vw, 250px);
   height: auto;
   filter: drop-shadow(0 0 40px rgba(167, 139, 250, 0.5))
           drop-shadow(0 0 80px rgba(167, 139, 250, 0.2));
