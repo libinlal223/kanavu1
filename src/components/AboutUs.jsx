@@ -10,13 +10,12 @@ export default function AboutUs() {
   const sectionRef = useRef(null);
   const textRefs = useRef([]);
 
-  // --- Pixel adjustments for easy positioning ---
-  // Change these numbers to instantly move the blocks left (negative) or right (positive)
+
   const headingOffsetX = -22; // Nudge the "About Us" heading
   const textOffsetX = 12;     // Nudge the paragraph block
-  
+
   // Change this to perfectly control where the text wraps (e.g. '650px', '700px', '45rem')
-  const textMaxWidth = "680px"; 
+  const textMaxWidth = "680px";
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -93,7 +92,7 @@ export default function AboutUs() {
         <div
           className="md:col-span-8 lg:col-span-6 lg:col-start-7 space-y-6 text-left font-league-spartan text-base md:text-lg text-gray-300 leading-relaxed pr-6 lg:pr-0 pt-2 transition-transform duration-300"
           style={{ transform: `translateX(${textOffsetX}px)`, maxWidth: textMaxWidth }}
-        >
+        ><br></br>
           <p ref={(el) => (textRefs.current[0] = el)} className="drop-shadow-md">
             We are Kanavu Kadha — Kerala’s first AI-powered advertising agency, specializing in AI video production, AI content creation, and cinematic brand storytelling in India.
             Our team of AI artists and creators brings ideas to life using advanced AI tools and creative innovation.

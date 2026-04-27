@@ -2,6 +2,11 @@ import Layout from "@/components/Layout";
 import FinaleOverlay from "@/components/FinaleOverlay";
 import Sec2Background from "@/components/Sec2Background";
 import AboutUs from "@/components/AboutUs";
+import VerticalImageStack from "@/components/VerticalImageStackWrapper";
+import OurTeam from "@/components/OurTeam";
+import OrbSection from "@/components/OrbSection";
+import ClientsSection from "@/components/ClientsSection";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -62,12 +67,29 @@ export default function Home() {
       {/* ── Section 5: About Us ── */}
       <AboutUs />
 
-      {/* ── Section 6: Blank spacer — background continues, no ribbon ── */}
+      {/* ── Section 6: Vertical Image Stack Gallery ── */}
       <section
-        id="spacer"
+        id="gallery"
         className="relative z-10"
-        style={{ minHeight: "100vh", background: "var(--background)" }}
-      />
+        style={{ background: "var(--background)" }}
+      >
+        <VerticalImageStack />
+      </section>
+
+      {/* ── Section 8: Interactive Orb ── */}
+      <OrbSection />
+
+      {/* ── Section 7: Our Team ── */}
+      <OurTeam />
+
+      {/* ── Section 8: Our Clients ── */}
+      <ClientsSection />
+
+      {/* ── Reserved Space for Future Section (100vh) ── */}
+      <section className="relative z-10 w-full" style={{ height: "100vh", background: "var(--background)" }} />
+
+      <Footer />
     </Layout>
   );
 }
+

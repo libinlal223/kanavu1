@@ -381,3 +381,25 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 10px 40px rgba(139, 92, 246, 0.15);
 }
+
+/* ── Scrollbar Hide Utility ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Infinite Scroll Animation ── */
+@keyframes infinite-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 12px)); } /* 12px is half of the 24px (gap-6) gap */
+}
+.animate-infinite-scroll {
+  animation: infinite-scroll 40s linear infinite;
+  width: max-content;
+}
+.animate-infinite-scroll:hover {
+  animation-play-state: paused;
+}
