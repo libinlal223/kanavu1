@@ -133,6 +133,62 @@ export default function FinaleOverlay() {
               Kerala&apos;s First AI-powered advertising agency.
             </p>
 
+            {/* Course Highlight Badge */}
+            <div 
+              className={`relative group inline-flex finale-fade-in delay-3 ${isVisible ? "visible" : ""}`}
+              style={{ marginTop: '2rem', marginBottom: '0' }}
+            >
+              {/* Subtle glow behind */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 blur-xl group-hover:opacity-75 transition duration-1000 opacity-50" style={{ borderRadius: '2.5rem' }}></div>
+              
+              {/* Main Container - Elegant Glass */}
+              <div 
+                className="relative flex flex-col md:flex-row items-center bg-white/[0.02] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:border-white/20 transition-colors duration-500"
+                style={{ 
+                  padding: '1.25rem 2rem', 
+                  gap: '1.5rem', 
+                  borderRadius: '2.5rem' 
+                }}
+              >
+                
+                {/* Left Side */}
+                <div className="flex flex-col items-center md:items-start justify-center text-center md:text-left">
+                  <span 
+                    className="uppercase text-[#a78bfa] font-semibold mb-2 drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]" 
+                    style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '11px', letterSpacing: '0.3em' }}
+                  >
+                    Register Now
+                  </span>
+                  
+                  <div className="flex items-center" style={{ gap: '0.75rem' }}>
+                    <span className="text-xl text-white/60 font-medium" style={{ fontFamily: 'var(--font-mono, monospace)' }}>INR:</span>
+                    <span className="font-bold tracking-tight text-white" style={{ fontFamily: 'var(--font-sans, sans-serif)', fontSize: '3rem', lineHeight: '1' }}>
+                      20,000
+                    </span>
+                  </div>
+                  
+                  <span className="mt-3 flex items-center justify-center md:justify-start text-white/50 uppercase font-mono" style={{ gap: '0.5rem', fontSize: '10px', letterSpacing: '0.15em' }}>
+                    <span className="bg-white/20 hidden md:block" style={{ width: '1rem', height: '1px' }}></span>
+                    AI Filmmaking Masterclass
+                  </span>
+                </div>
+
+                {/* Separator (Hide on mobile) */}
+                <div className="hidden md:block bg-gradient-to-b from-transparent via-white/15 to-transparent" style={{ width: '1px', height: '5rem' }}></div>
+
+                {/* Right Side */}
+                <div className="flex flex-col justify-center items-center">
+                  <button className="flex items-center border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/40 transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]" style={{ gap: '0.75rem', padding: '0.875rem 2.5rem', borderRadius: '9999px' }}>
+                    <span className="rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)] animate-pulse" style={{ width: '6px', height: '6px' }}></span>
+                    <span className="text-white font-medium tracking-wide" style={{ fontFamily: 'var(--font-sans, sans-serif)', fontSize: '15px' }}>
+                      Register
+                    </span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
 

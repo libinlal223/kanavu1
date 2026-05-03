@@ -3,8 +3,7 @@ import React from 'react';
 const Footer = () => {
   return (
     <footer
-      className="relative z-10 w-full pt-48 pb-6 overflow-hidden flex flex-col"
-      style={{ background: 'var(--background)' }}
+      className="relative z-10 w-full pt-48 pb-6 overflow-hidden flex flex-col bg-black"
     >
       <div className="w-full max-w-[90rem] mx-auto px-6 md:px-12 lg:px-24 xl:px-32 flex-1 flex flex-col justify-between">
 

@@ -6,6 +6,7 @@ import VerticalImageStack from "@/components/VerticalImageStackWrapper";
 import OurTeam from "@/components/OurTeam";
 import OrbSection from "@/components/OrbSection";
 import ClientsSection from "@/components/ClientsSection";
+import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -85,11 +86,10 @@ export default function Home() {
       {/* ── Section 8: Our Clients ── */}
       <ClientsSection />
 
-      {/* ── Reserved Space for Future Section (100vh) ── */}
-      <section className="relative z-10 w-full" style={{ height: "100vh", background: "var(--background)" }} />
+      {/* ── Section 9: Contact ── */}
+      <ContactSection />
 
       <Footer />
     </Layout>
   );
 }
-
