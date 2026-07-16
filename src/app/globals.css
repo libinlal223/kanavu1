@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../components/**/*.{js,jsx}";
+@source "../app/**/*.{js,jsx}";
 
 /* ── Design Tokens ── */
 :root {
@@ -58,8 +60,7 @@ html.lenis body {
 }
 
 body {
-  background: var(--nebula-gradient);
-  background-attachment: fixed;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
@@ -128,8 +129,13 @@ body {
   z-index: 1;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 1.2s ease-in-out;
 }
+
+.finale-shader-bg.visible {
+  opacity: 1;
+}
+
 
 /* Sticky inner wrapper — sits at viewport centre */
 .finale-overlay {
@@ -156,6 +162,7 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  pointer-events: auto; /* Enable clicks and interactions on the hero card */
 }
 
 .finale-hero-wrapper.visible {

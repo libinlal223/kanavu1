@@ -21,9 +21,42 @@ const WebGLShader = dynamic(() => import("./WebGLShader"), { ssr: false });
 export default function FinaleOverlay() {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(false);
-  const [fadeProgress, setFadeProgress] = useState(0);
+  const [renderShader, setRenderShader] = useState(false);
+  // Use ref instead of state for fadeProgress to avoid React re-renders on every scroll tick
+  const fadeProgressRef = useRef(0);
   const isVisibleRef = useRef(false);
   const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const targets = ["finale", "about-us"]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (targets.length === 0) return;
+
+    const visibilityMap = new Map();
+    targets.forEach((t) => visibilityMap.set(t.id, false));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          visibilityMap.set(entry.target.id, entry.isIntersecting);
+        });
+        const shouldRender = Array.from(visibilityMap.values()).some((visible) => visible);
+        setRenderShader(shouldRender);
+      },
+      {
+        threshold: 0,
+        rootMargin: "150px 0px 150px 0px", // Pre-load slightly before entering view
+      }
+    );
+
+    targets.forEach((t) => observer.observe(t));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     // GSAP Animation for #finale section
@@ -37,10 +70,10 @@ export default function FinaleOverlay() {
         start: "top bottom",
         end: "bottom bottom",
         onUpdate: (self) => {
-          // Fade progress builds up over the entire finale scroll
-          setFadeProgress(self.progress);
+          // Update ref directly — no React re-render
+          fadeProgressRef.current = self.progress;
 
-          // Trigger the text/logo pop-in at an appropriate point
+          // Trigger the text/logo and shader pop-in at an appropriate point
           const shouldBeVisible = self.progress >= 0.75;
           if (shouldBeVisible !== isVisibleRef.current) {
             isVisibleRef.current = shouldBeVisible;
@@ -92,17 +125,13 @@ export default function FinaleOverlay() {
     };
   }, []);
 
-  // Compute the overall container opacity — only start after tunnel is fully behind (0.65+)
-  const containerOpacity = Math.min(1, Math.max(0, (fadeProgress - 0.65) * 4));
-
   return (
     <>
       {/* ── Full-screen WebGL shader background ── */}
       <div
-        className="finale-shader-bg"
-        style={{ opacity: containerOpacity }}
+        className={`finale-shader-bg ${isVisible ? "visible" : ""}`}
       >
-        <WebGLShader />
+        {renderShader && <WebGLShader />}
       </div>
 
       {/* ── Sticky centre content (framed hero card) ── */}

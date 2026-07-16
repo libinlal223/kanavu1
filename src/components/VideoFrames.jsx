@@ -296,10 +296,10 @@ function TunnelFloor({ isMobile }) {
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[120, 200]} />
         <MeshReflectorMaterial
-          blur={[300, 100]}
-          resolution={1024}
+          blur={[200, 80]}
+          resolution={512}
           mixBlur={1.5}
-          mixStrength={50}
+          mixStrength={30}
           roughness={0.15}
           roughnessMap={roughnessTex}
           depthScale={1.2}
@@ -412,7 +412,7 @@ export default function VideoFrames({ isMobile }) {
 
 
       {/* 4. Deep Volumetric Smog System */}
-      <Clouds limit={60}>
+      <Clouds limit={40}>
         <Cloud
           seed={1}
           position={[0, 0, END_Z - 2]}
@@ -420,13 +420,13 @@ export default function VideoFrames({ isMobile }) {
           opacity={0.05} // Kept low because bloom is very high
           speed={0.2}
           volume={15}
-          segments={20}
+          segments={12}
           bounds={[20, 8, 4]}
           fade={20}
         />
         {/* Ambient moving fog along the tunnel walls */}
         {frameZs.map((z, i) => {
-          if (i % 2 === 0 && i < frameZs.length - 1) {
+          if (i % 4 === 0 && i < frameZs.length - 1) {
             return (
               <group key={`ambient_fog_${i}`}>
                 {/* Left wall fog */}
@@ -437,7 +437,7 @@ export default function VideoFrames({ isMobile }) {
                   opacity={0.15}
                   speed={0.6} // Actively moving
                   volume={10}
-                  segments={10}
+                  segments={6}
                   bounds={[4, 10, 10]}
                   fade={20}
                 />
@@ -449,7 +449,7 @@ export default function VideoFrames({ isMobile }) {
                   opacity={0.15}
                   speed={0.6}
                   volume={10}
-                  segments={10}
+                  segments={6}
                   bounds={[4, 10, 10]}
                   fade={20}
                 />
@@ -475,7 +475,7 @@ export default function VideoFrames({ isMobile }) {
                 opacity={0.35} // Reduced volume opacity so the image burns through clearly
                 speed={0.4}
                 volume={6}
-                segments={15}
+                segments={8}
                 bounds={[8, 6, 4]}
                 fade={15}
               />

@@ -32,19 +32,19 @@ const ContactSection = () => {
 
           {/* ── Right Side: Contact Form ── */}
           <div className="lg:col-span-7 flex flex-col justify-center lg:pl-16">
-            <div className="w-full bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 md:p-16 shadow-2xl relative group/card">
+            <div className="w-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 md:p-16 shadow-2xl relative group/card">
 
               {/* Subtle highlight effect on card */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] to-transparent opacity-50 pointer-events-none rounded-[3rem]"></div>
 
-              <form className="relative z-10 w-full flex flex-col gap-12" onSubmit={(e) => e.preventDefault()}>
+              <form className="relative z-10 w-full flex flex-col gap-12 px-6 md:px-10" onSubmit={(e) => e.preventDefault()}>
 
               <div className="flex flex-col gap-3 group">
                 <label className="text-[10px] text-[#A1A1AA] tracking-[0.25em] font-bold uppercase transition-colors group-focus-within:text-[#bc3ad6]">Your Name</label>
                 <input
                   type="text"
                   placeholder="Enter your name"
-                  className="w-full bg-transparent border-b border-white/10 pb-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors"
+                  className="w-full bg-transparent border-b border-white/10 py-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors"
                 />
               </div>
 
@@ -53,7 +53,7 @@ const ContactSection = () => {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full bg-transparent border-b border-white/10 pb-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors"
+                  className="w-full bg-transparent border-b border-white/10 py-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors"
                 />
               </div>
 
@@ -62,7 +62,7 @@ const ContactSection = () => {
                 <textarea
                   rows="3"
                   placeholder="Tell us about your project..."
-                  className="w-full bg-transparent border-b border-white/10 pb-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors resize-none"
+                  className="w-full bg-transparent border-b border-white/10 py-4 text-white text-xl placeholder-white/20 focus:outline-none focus:border-[#bc3ad6] transition-colors resize-none"
                 ></textarea>
               </div>
 

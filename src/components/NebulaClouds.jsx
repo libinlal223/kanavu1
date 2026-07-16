@@ -82,6 +82,7 @@ export default function NebulaClouds() {
   }, []);
 
   // Slow ambient rotation AND fade-in animation based on logo scroll
+  const lastFadeMultiplier = useRef(-1);
   useFrame((_, delta) => {
     if (!groupRef.current) return;
 
@@ -91,12 +92,13 @@ export default function NebulaClouds() {
     const p = scrollProgress.current;
     const fadeMultiplier = p < 0.7 ? 0 : (p - 0.7) / 0.3;
 
+    // Skip expensive traverse if the multiplier hasn't changed meaningfully
+    if (Math.abs(fadeMultiplier - lastFadeMultiplier.current) < 0.005) return;
+    lastFadeMultiplier.current = fadeMultiplier;
+
     // Apply the fade multiplier to all cloud children materials
     groupRef.current.traverse((child) => {
       if (child.isMesh && child.material) {
-        // Find the matching config index for this cloud.
-        // In @react-three/drei's Clouds, child might be an InstancedMesh or individual Meshes.
-        // We set the base material's opacity which scales the total opacity of the instanced mesh.
         child.material.transparent = true;
         child.material.opacity = fadeMultiplier;
       }

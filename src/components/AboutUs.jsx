@@ -21,10 +21,13 @@ export default function AboutUs() {
     const el = sectionRef.current;
     if (!el) return;
 
+    // Track triggers created by THIS component only
+    const localTriggers = [];
+
     // Animate the 'About Us' title
     const titleEl = el.querySelector("h2");
     if (titleEl) {
-      gsap.fromTo(
+      const tween = gsap.fromTo(
         titleEl,
         { opacity: 0, x: -50 },
         {
@@ -39,11 +42,12 @@ export default function AboutUs() {
           },
         }
       );
+      if (tween.scrollTrigger) localTriggers.push(tween.scrollTrigger);
     }
 
     // Fade up each paragraph sequentially as you scroll
     textRefs.current.filter(Boolean).forEach((textEl, index) => {
-      gsap.fromTo(
+      const tween = gsap.fromTo(
         textEl,
         { opacity: 0, y: 30 },
         {
@@ -59,6 +63,7 @@ export default function AboutUs() {
           },
         }
       );
+      if (tween.scrollTrigger) localTriggers.push(tween.scrollTrigger);
     });
 
     // --- Pixel adjustments for easy positioning ---
@@ -67,7 +72,8 @@ export default function AboutUs() {
     const textOffsetX = 15;     // Nudge the paragraph block
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      // Only kill triggers created by THIS component
+      localTriggers.forEach((t) => t.kill());
     };
   }, []);
 

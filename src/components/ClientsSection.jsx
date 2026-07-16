@@ -18,8 +18,8 @@ const collaborations = [
     brand: "L'ORÉAL PARIS",
     subtitle: "VIRTUAL TRY-ON",
     title: "AI-Powered Beauty Experience",
-    description: "Revolutionizing how customers discover products with hyper-realistic AI visualization.",
-    image: "/collab/1.png", // Reuse for demo
+    description: "Our team delivered the AI pre-visualization for Aadu 3. Building on our early workflows, this project marks a definitive milestone—translating digital character blueprints, costumes, and environments directly onto the big screen.",
+    image: "/collabrations/aadu1.png",
     color: "#1a0b0b"
   },
   {
@@ -27,8 +27,8 @@ const collaborations = [
     brand: "PORSCHE",
     subtitle: "DRIVING EMOTION",
     title: "Interactive Brand Narrative",
-    description: "Crafting immersive digital stories that capture the essence of performance and luxury.",
-    image: "/collab/1.png",
+    description: "Our team had the opportunity to contribute to the official promotional campaign for The Black Phone 2 streaming on JioHotstar. We developed dynamic visual elements for the launch, marking a significant milestone in our portfolio.",
+    image: "/collabrations/phonebook2.jpg",
     color: "#0f0f0f"
   },
   {
@@ -36,8 +36,8 @@ const collaborations = [
     brand: "SAMSUNG",
     subtitle: "GALAXY AI",
     title: "The Future of Connectivity",
-    description: "Showcasing the power of integrated AI in the palm of your hand.",
-    image: "/collab/1.png",
+    description: "We reached a massive milestone at Kanavu Kadha, crossing 100K subscribers and bringing home our official YouTube Silver Play Button. Scaling our community and whimsical digital art to this level marks a proud new chapter in our creative journey.",
+    image: "/collabrations/yt100.jpeg",
     color: "#0b1a2e"
   }
 ];
@@ -56,6 +56,9 @@ const ClientsSection = () => {
   // Opacity for the kanavukadha heading
   const textOpacity = useTransform(scrollYProgress, [0.25, 0.3], [1, 0]);
 
+  // Set display to none after text has fully zoomed/faded out to prevent browser layout and composition lag
+  const display = useTransform(scrollYProgress, (pos) => pos >= 0.3 ? "none" : "flex");
+
   return (
     <section
       ref={containerRef}
@@ -72,7 +75,9 @@ const ClientsSection = () => {
           style={{
             scale,
             transformOrigin: '77.5% 65%',
-            opacity: textOpacity
+            opacity: textOpacity,
+            display,
+            willChange: "transform, opacity"
           }}
         >
           <h2
@@ -99,7 +104,7 @@ const ClientsSection = () => {
         {/* Collaborations Heading - Scrolls up naturally into the black void */}
         <div className="w-full flex justify-center items-center pt-32 pb-16">
           <h3 className="text-white text-5xl md:text-7xl font-montserrat font-medium tracking-tight drop-shadow-md" style={{ color: '#ffffff' }}>
-            Collaborations
+            Benchmarks
           </h3>
         </div>
         {collaborations.map((collab, index) => (
@@ -128,11 +133,6 @@ const ClientsSection = () => {
                 />
                 {/* Gradient overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40"></div>
-              </div>
-
-              {/* Card Bottom: Info */}
-              <div className="relative z-10 shrink-0 pb-2 pl-4 md:pl-6">
-                <h4 className="text-white text-3xl md:text-4xl font-medium leading-tight tracking-tight drop-shadow-lg">{collab.title}</h4>
               </div>
 
               {/* Subtle glass overlay highlight */}

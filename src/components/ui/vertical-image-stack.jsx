@@ -7,33 +7,28 @@ import { motion } from "framer-motion"
 const images = [
   {
     id: 1,
-    src: "https://i.ibb.co/4ZWcP129/1.png",
-    alt: "Elegant Invitation",
+    src: "/works/work1.jpg",
+    alt: "Work 1",
   },
   {
     id: 2,
-    src: "https://i.ibb.co/TMbhBRcL/2.png",
-    alt: "Modern Design",
+    src: "/works/work2.jpg",
+    alt: "Work 2",
   },
   {
     id: 3,
-    src: "https://i.ibb.co/spXBFdSm/3.png",
-    alt: "Vintage Style",
+    src: "/works/work3.jpg",
+    alt: "Work 3",
   },
   {
     id: 4,
-    src: "https://i.ibb.co/N2TCN0bC/4.png",
-    alt: "Minimalist",
+    src: "/works/work4.jpg",
+    alt: "Work 4",
   },
   {
     id: 5,
-    src: "https://i.ibb.co/jZkh6q1M/5.png",
-    alt: "Floral Design",
-  },
-  {
-    id: 6,
-    src: "https://i.ibb.co/6cc7mksr/6.png",
-    alt: "Geometric",
+    src: "/works/work5.jpg",
+    alt: "Work 5",
   },
 ]
 
@@ -41,6 +36,7 @@ export function VerticalImageStack() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const lastNavigationTime = useRef(0)
   const containerRef = useRef(null)
+  const stackRef = useRef(null)
   const navigationCooldown = 250 // ms between navigations
 
   const navigate = useCallback((newDirection) => {
@@ -69,9 +65,9 @@ export function VerticalImageStack() {
     }
   }
 
-  // Scoped wheel handler — only triggers when pointer is over the component
+  // Scoped wheel handler — only triggers when pointer is over the works display stack
   useEffect(() => {
-    const el = containerRef.current
+    const el = stackRef.current
     if (!el) return
 
     const handleWheel = (e) => {
@@ -141,7 +137,11 @@ export function VerticalImageStack() {
       </div>
 
       {/* Card Stack */}
-      <div className="relative flex h-[640px] w-[320px] items-center justify-center" style={{ perspective: "1200px" }}>
+      <div
+        ref={stackRef}
+        className="relative flex h-[640px] w-[320px] items-center justify-center"
+        style={{ perspective: "1200px" }}
+      >
         {images.map((image, index) => {
           if (!isVisible(index)) return null
           const style = getCardStyle(index)

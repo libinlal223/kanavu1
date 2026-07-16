@@ -131,6 +131,7 @@ function LogoMesh() {
   }, []);
 
   /* ── Per-frame animation driven by scroll (logo scale + fade) ── */
+  const lastOpacity = useRef(1);
   useFrame(() => {
     const p = scrollProgress.current;
     const wrapper = wrapperRef.current;
@@ -151,11 +152,15 @@ function LogoMesh() {
           )
         : 1;
 
-    wrapper.traverse((child) => {
-      if (child.isMesh && child.material) {
-        child.material.opacity = opacity;
-      }
-    });
+    // Only traverse if opacity actually changed
+    if (Math.abs(opacity - lastOpacity.current) > 0.005) {
+      lastOpacity.current = opacity;
+      wrapper.traverse((child) => {
+        if (child.isMesh && child.material) {
+          child.material.opacity = opacity;
+        }
+      });
+    }
   });
 
   return (
@@ -196,6 +201,8 @@ function CameraRig() {
 
   const colorNavy = useMemo(() => new THREE.Color("#1a0b2e"), []);
   const colorBlack = useMemo(() => new THREE.Color("#000000"), []);
+  // Pre-allocated temp color to avoid .clone() allocation every frame
+  const tempColor = useMemo(() => new THREE.Color(), []);
 
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
@@ -278,7 +285,7 @@ function CameraRig() {
       targetZ = THREE.MathUtils.lerp(CAMERA_NEBULA_END_Z, CAMERA_FINALE_Z, easedP);
       
       // Interpolate background transitioning to completely pitch black
-      targetColor = colorNavy.clone().lerp(colorBlack, easedP);
+      targetColor = tempColor.copy(colorNavy).lerp(colorBlack, easedP);
     }
 
     // Smooth damping for cinematic feel
@@ -310,11 +317,11 @@ function StarLayers({ isMobile }) {
 
   return (
     <>
-      {/* Layer 1 — small, distant stars */}
+      {/* Layer 1 — small, distant stars (reduced count for performance) */}
       <Stars
         radius={300}
         depth={distantDepth}
-        count={isMobile ? 4000 : 8000}
+        count={isMobile ? 2500 : 5000}
         factor={3}
         saturation={0}
         fade
@@ -325,7 +332,7 @@ function StarLayers({ isMobile }) {
       <Stars
         radius={200}
         depth={sparkleDepth}
-        count={isMobile ? 400 : 800}
+        count={isMobile ? 250 : 500}
         factor={8}
         saturation={0.6}
         fade
@@ -340,10 +347,10 @@ function StarLayers({ isMobile }) {
 /* ────────────────────────────────────────────────────────────────────────── */
 function PostProcessing() {
   return (
-    <EffectComposer>
+    <EffectComposer multisampling={0}>
       <Bloom
-        intensity={2.5}
-        luminanceThreshold={0.1}
+        intensity={2.0}
+        luminanceThreshold={0.2}
         luminanceSmoothing={0.9}
         mipmapBlur
       />
@@ -409,8 +416,8 @@ export default function Scene() {
           near: 0.01,
           far: 2000,
         }}
-        gl={{ antialias: true, alpha: false }}
-        dpr={[1, 2]}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+        dpr={[1, 1.5]}
         style={{ background: "#1a0b2e" }}
         onCreated={({ gl }) => {
           gl.setClearColor("#1a0b2e", 1);

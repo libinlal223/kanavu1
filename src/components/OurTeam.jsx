@@ -2,7 +2,7 @@ import React from 'react';
 
 const OurTeam = () => {
   return (
-    <section id="our-team" className="relative z-10 w-full py-24 md:py-32" style={{ background: "var(--background)", paddingTop: 'calc(6rem + 30px)' }}>
+    <section id="team" className="relative z-10 w-full py-24 md:py-32" style={{ background: "var(--background)", paddingTop: 'calc(6rem + 30px)' }}>
       {/* Reduced max-width to keep elements beautifully centered instead of pushed to the edges */}
       <div className="w-full max-w-[78rem] mx-auto px-6 md:px-12 lg:px-16">
 
@@ -21,7 +21,7 @@ const OurTeam = () => {
             {/* Reduced from w-full to w-[85%] to shrink the image size. Change 85% to adjust! */}
             <div className="w-[85%] aspect-[4/5] bg-[#1a1a1a]">
               <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"
+                src="/ceo.jpg"
                 alt="Akhil"
                 className="w-full h-full object-cover grayscale"
               />
